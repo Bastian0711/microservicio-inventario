@@ -34,31 +34,31 @@ docker compose up -d
 
 ### Obtener inventario
 
-GET /api/v1/inventario
+GET /api/v2/inventario
 
 ### Obtener inventario por ID
 
-GET /api/v1/inventario/{id}
+GET /api/v2/inventario/{id}
 
 ### Crear inventario
 
-POST /api/v1/inventario
+POST /api/v2/inventario
 
 ### Actualizar inventario
 
-PUT /api/v1/inventario/{id}
+PUT /api/v2/inventario/{id}
 
 ### Eliminar inventario
 
-DELETE /api/v1/inventario/{id}
+DELETE /api/v2/inventario/{id}
 
 ### Consultar stock
 
-GET /api/v1/inventario/stock/{productoId}
+GET /api/v2/inventario/stock/{productoId}
 
 ### Descontar stock
 
-PUT /api/v1/inventario/descontar
+PUT /api/v2/inventario/descontar
 
 ## Validaciones
 
