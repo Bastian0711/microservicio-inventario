@@ -23,10 +23,11 @@ Microservicio encargado de gestionar el inventario y stock de productos dentro d
 * Maven
 * Docker
 * Docker Compose
+* OpenFeign
 
 ## Ejecución del proyecto
 
-```bash id="wwpx3z"
+```bash
 docker compose up -d
 ```
 
@@ -60,8 +61,31 @@ GET /api/v2/inventario/stock/{productoId}
 
 PUT /api/v2/inventario/descontar
 
+## Comunicación entre microservicios
+
+Este microservicio se comunica con el microservicio de productos utilizando Feign Client para validar la existencia de productos antes de realizar operaciones de inventario.
+
+### Endpoint consumido
+
+GET /api/v2/productos/{id}
+
+## Configuración de comunicación
+
+Variable de entorno utilizada:
+
+```properties
+PRODUCTO_SERVICE_URL
+```
+
+Ejemplo de URL:
+
+```text
+http://18.210.19.5:8084/api/v2/productos/1
+```
+
 ## Validaciones
 
 * Validación de campos obligatorios
 * Validación de stock positivo
 * Manejo de errores controlados con Bean Validation
+* Manejo de errores cuando el microservicio de productos no está disponible
