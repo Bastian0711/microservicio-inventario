@@ -21,7 +21,7 @@ import cl.duoc.backend_inventario.model.Inventario;
 import cl.duoc.backend_inventario.service.InventarioService;
 
 @RestController
-@RequestMapping("/api/v1/inventario")
+@RequestMapping("/api/v2/inventario")
 public class InventarioController {
 
     private final InventarioService inventarioService;

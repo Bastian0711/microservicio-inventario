@@ -103,7 +103,10 @@ public class InventarioService {
     }
 
     public void eliminar(Long id) {
-        inventarioRepository.deleteById(id);
+        Inventario inventario = inventarioRepository.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Inventario no encontrado"));
+
+        inventarioRepository.delete(inventario);
     }
 
     public Inventario obtenerPorProducto(Long idProducto) {
