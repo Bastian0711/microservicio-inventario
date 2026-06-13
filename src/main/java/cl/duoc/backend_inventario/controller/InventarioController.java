@@ -1,23 +1,18 @@
 package cl.duoc.backend_inventario.controller;
 
+import jakarta.validation.Valid;
+
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import cl.duoc.backend_inventario.dto.DescontarStockDTO;
 import cl.duoc.backend_inventario.dto.InventarioCreateDTO;
 import cl.duoc.backend_inventario.dto.InventarioDTO;
 import cl.duoc.backend_inventario.dto.InventarioUpdateDTO;
 import cl.duoc.backend_inventario.dto.StockResponseDTO;
-import cl.duoc.backend_inventario.model.Inventario;
 import cl.duoc.backend_inventario.service.InventarioService;
 
 @RestController
@@ -31,23 +26,23 @@ public class InventarioController {
     }
 
     @GetMapping
-    public List<Inventario> listar() {
+    public List<InventarioDTO> listar() {
         return inventarioService.listar();
     }
 
     @GetMapping("/{id}")
-    public Inventario obtener(@PathVariable Long id) {
-        return inventarioService.obtenerPorId(id).orElse(null);
+    public InventarioDTO obtener(@PathVariable Long id) {
+        return inventarioService.obtenerPorId(id);
     }
 
     @GetMapping("/producto/{idProducto}")
-    public Inventario obtenerPorProducto(@PathVariable Long idProducto) {
+    public InventarioDTO obtenerPorProducto(@PathVariable Long idProducto) {
         return inventarioService.obtenerPorProducto(idProducto);
     }
 
     @PostMapping
-    public InventarioDTO crear(@RequestBody InventarioCreateDTO dto) {
-        return inventarioService.crearInventario(dto);
+    public ResponseEntity<InventarioDTO> crear(@Valid @RequestBody InventarioCreateDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(inventarioService.crearInventario(dto));
     }
 
     @PostMapping("/descontar")
@@ -56,13 +51,13 @@ public class InventarioController {
     }
 
     @PutMapping("/{id}")
-    public InventarioDTO actualizar(@PathVariable Long id, @RequestBody InventarioUpdateDTO dto) {
+    public InventarioDTO actualizar(@PathVariable Long id, @Valid @RequestBody InventarioUpdateDTO dto) {
         return inventarioService.actualizar(id, dto);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> eliminar(@PathVariable Long id) {
         inventarioService.eliminar(id);
-        return ResponseEntity.ok("Producto eliminado correctamente");
+        return ResponseEntity.ok("Inventario eliminado correctamente");
     }
 }

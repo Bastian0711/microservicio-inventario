@@ -1,8 +1,9 @@
 package cl.duoc.backend_inventario.service;
 
 import java.util.List;
-import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import cl.duoc.backend_inventario.client.ProductoClient;
@@ -12,6 +13,7 @@ import cl.duoc.backend_inventario.dto.InventarioDTO;
 import cl.duoc.backend_inventario.dto.InventarioUpdateDTO;
 import cl.duoc.backend_inventario.dto.ProductoDTO;
 import cl.duoc.backend_inventario.dto.StockResponseDTO;
+import cl.duoc.backend_inventario.exception.EstadoInvalidoException;
 import cl.duoc.backend_inventario.exception.RecursoNoEncontradoException;
 import cl.duoc.backend_inventario.exception.ServicioNoDisponibleException;
 import cl.duoc.backend_inventario.model.Inventario;
@@ -21,51 +23,48 @@ import feign.FeignException;
 @Service
 public class InventarioService {
 
-    private final InventarioRepository inventarioRepository;
+    private static final Logger log =
+            LoggerFactory.getLogger(InventarioService.class);
+
+    private final InventarioRepository repository;
     private final ProductoClient productoClient;
 
-    public InventarioService(InventarioRepository inventarioRepository,
+    public InventarioService(
+            InventarioRepository repository,
             ProductoClient productoClient) {
-        this.inventarioRepository = inventarioRepository;
+
+        this.repository = repository;
         this.productoClient = productoClient;
     }
 
-    private ProductoDTO validarProducto(Long idProducto) {
-        try {
-            ProductoDTO producto = productoClient.obtenerProducto(idProducto);
+    public List<InventarioDTO> listar() {
 
-            if (producto == null) {
-                throw new RecursoNoEncontradoException("Producto no encontrado");
-            }
-
-            if (Boolean.FALSE.equals(producto.getDisponible())) {
-                throw new RecursoNoEncontradoException("Producto no disponible");
-            }
-
-            return producto;
-
-        } catch (FeignException.NotFound e) {
-            throw new RecursoNoEncontradoException("Producto no encontrado");
-        } catch (FeignException e) {
-            throw new ServicioNoDisponibleException("No se pudo consultar el microservicio de productos");
-        }
+        return repository.findAll()
+                .stream()
+                .map(this::toDto)
+                .toList();
     }
 
-    public List<Inventario> listar() {
-        return inventarioRepository.findAll();
+    public InventarioDTO obtenerPorId(Long id) {
+        return toDto(obtenerEntidadPorId(id));
     }
 
-    public Optional<Inventario> obtenerPorId(Long id) {
-        return inventarioRepository.findById(id);
-    }
+    public InventarioDTO obtenerPorProducto(Long idProducto) {
 
-    public Inventario guardar(Inventario inventario) {
-        return inventarioRepository.save(inventario);
+        Inventario inventario = repository.findByIdProducto(idProducto)
+                .orElseThrow(() ->
+                        new RecursoNoEncontradoException(
+                                "Inventario no encontrado para el producto"));
+
+        return toDto(inventario);
     }
 
     public InventarioDTO crearInventario(InventarioCreateDTO dto) {
 
-        validarProducto(dto.getIdProducto());
+        ProductoDTO producto = validarProducto(dto.getIdProducto());
+
+        log.info("Creando inventario para producto id={}, nombre={}",
+                dto.getIdProducto(), producto.getNombre());
 
         Inventario inventario = new Inventario();
 
@@ -75,68 +74,108 @@ public class InventarioService {
         inventario.setStock(dto.getStock());
         inventario.setPrecio(dto.getPrecio());
 
-        Inventario inventarioGuardado = inventarioRepository.save(inventario);
+        Inventario guardado = repository.save(inventario);
 
-        InventarioDTO response = new InventarioDTO();
-        response.setId(inventarioGuardado.getId());
-        response.setIdProducto(inventarioGuardado.getIdProducto());
-        response.setStock(inventarioGuardado.getStock());
+        log.info("Inventario creado exitosamente id={}", guardado.getId());
 
-        return response;
+        return toDto(guardado);
     }
 
     public InventarioDTO actualizar(Long id, InventarioUpdateDTO dto) {
 
-        Inventario inventario = inventarioRepository.findById(id)
-                .orElseThrow(() -> new RecursoNoEncontradoException("Inventario no encontrado"));
+        Inventario inventario = obtenerEntidadPorId(id);
 
         inventario.setStock(dto.getStock());
 
-        Inventario inventarioActualizado = inventarioRepository.save(inventario);
-
-        InventarioDTO response = new InventarioDTO();
-        response.setId(inventarioActualizado.getId());
-        response.setIdProducto(inventarioActualizado.getIdProducto());
-        response.setStock(inventarioActualizado.getStock());
-
-        return response;
+        return toDto(repository.save(inventario));
     }
 
     public void eliminar(Long id) {
-        Inventario inventario = inventarioRepository.findById(id)
-                .orElseThrow(() -> new RecursoNoEncontradoException("Inventario no encontrado"));
 
-        inventarioRepository.delete(inventario);
-    }
+        Inventario inventario = obtenerEntidadPorId(id);
 
-    public Inventario obtenerPorProducto(Long idProducto) {
-        return inventarioRepository.findAll()
-                .stream()
-                .filter(inv -> inv.getIdProducto().equals(idProducto))
-                .findFirst()
-                .orElse(null);
+        repository.delete(inventario);
+
+        log.info("Inventario eliminado id={}", id);
     }
 
     public StockResponseDTO descontarStock(DescontarStockDTO dto) {
 
         validarProducto(dto.getIdProducto());
 
-        Inventario inventario = obtenerPorProducto(dto.getIdProducto());
-
-        if (inventario == null) {
-            throw new RecursoNoEncontradoException("Inventario no encontrado para el producto");
-        }
+        Inventario inventario = repository.findByIdProducto(dto.getIdProducto())
+                .orElseThrow(() ->
+                        new RecursoNoEncontradoException(
+                                "Inventario no encontrado para el producto"));
 
         if (inventario.getStock() < dto.getCantidad()) {
-            throw new RecursoNoEncontradoException("Stock insuficiente");
+
+            throw new EstadoInvalidoException("Stock insuficiente para el producto");
         }
 
         inventario.setStock(inventario.getStock() - dto.getCantidad());
-        inventarioRepository.save(inventario);
 
-        StockResponseDTO response = new StockResponseDTO();
-        response.setStockRestante(inventario.getStock());
+        repository.save(inventario);
 
-        return response;
+        log.info("Stock descontado: producto={}, cantidad={}, restante={}",
+                dto.getIdProducto(), dto.getCantidad(), inventario.getStock());
+
+        return new StockResponseDTO(inventario.getStock());
+    }
+
+    private ProductoDTO validarProducto(Long idProducto) {
+
+        try {
+
+            log.info("Consultando producto id={}", idProducto);
+
+            ProductoDTO producto = productoClient.obtenerProducto(idProducto);
+
+            log.info("Producto encontrado: {}", producto.getNombre());
+
+            if (Boolean.FALSE.equals(producto.getDisponible())) {
+
+                throw new EstadoInvalidoException("Producto no disponible");
+            }
+
+            return producto;
+
+        } catch (EstadoInvalidoException e) {
+
+            throw e;
+
+        } catch (FeignException.NotFound e) {
+
+            log.warn("Producto id={} no existe", idProducto);
+
+            throw new RecursoNoEncontradoException("Producto no encontrado");
+
+        } catch (FeignException e) {
+
+            log.error("Error al consultar servicio Productos: {}", e.getMessage());
+
+            throw new ServicioNoDisponibleException(
+                    "Servicio de productos no disponible");
+        }
+    }
+
+    private Inventario obtenerEntidadPorId(Long id) {
+
+        return repository.findById(id)
+                .orElseThrow(() ->
+                        new RecursoNoEncontradoException(
+                                "Inventario no encontrado"));
+    }
+
+    private InventarioDTO toDto(Inventario i) {
+
+        return new InventarioDTO(
+                i.getId(),
+                i.getIdProducto(),
+                i.getNombreProducto(),
+                i.getCategoria(),
+                i.getStock(),
+                i.getPrecio()
+        );
     }
 }

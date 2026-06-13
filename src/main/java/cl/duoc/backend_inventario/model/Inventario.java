@@ -1,40 +1,38 @@
 package cl.duoc.backend_inventario.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+@Entity
+@Table(name = "inventario")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity
+@Builder
 public class Inventario {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_inventario")
     private Long id;
 
+    @Column(name = "id_producto")
     private Long idProducto;
 
-    @NotBlank(message = "El nombre del producto es obligatorio")
+    @Column(name = "nombre_producto")
     private String nombreProducto;
 
-    @NotBlank(message = "La categoría es obligatoria")
     private String categoria;
 
-    @NotNull(message = "El stock es obligatorio")
-    @Min(value = 0, message = "El stock no puede ser negativo")
     private Integer stock;
 
-    @NotNull(message = "El precio es obligatorio")
-    @Positive(message = "El precio debe ser mayor a 0")
     private Double precio;
 }
