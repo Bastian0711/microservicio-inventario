@@ -65,6 +65,13 @@ public class GlobalExceptionHandler {
         @ExceptionHandler(Exception.class)
         public ResponseEntity<Map<String, String>> handleGeneric(Exception e) {
 
+                e.printStackTrace(); // línea temporal para ver el error real
+
+                if (e.getClass().getName().startsWith("org.springdoc") ||
+                                e.getClass().getName().startsWith("io.swagger")) {
+                        throw new RuntimeException(e);
+                }
+
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                                 .body(Map.of(
                                                 "error", "INTERNAL_ERROR",
