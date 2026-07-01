@@ -1,0 +1,37 @@
+services:
+  db-servicio-inventario:
+    image: mysql:8.0
+    container_name: mysql_servidor_inventario
+    environment:
+      MYSQL_ROOT_PASSWORD: clave_maestra_root
+      MYSQL_DATABASE: inventario_backend
+      MYSQL_USER: desarrollador
+      MYSQL_PASSWORD: password_seguro_123
+    ports:
+      - "3308:3306"
+    networks:
+      - red_interna_inventario
+    volumes:
+      - persistencia_db_inventario:/var/lib/mysql
+
+  workspace-java-inventario:
+    image: maven:3.9-eclipse-temurin-21
+    container_name: entorno_inventario
+    ports:
+      - "8090:8090"
+    depends_on:
+      - db-servicio-inventario
+    networks:
+      - red_interna_inventario
+    command: tail -f /dev/null
+    volumes:
+      - ./codigo-fuente:/app
+    environment:
+      - PRODUCTO_SERVICE_URL=http://34.231.120.127:8084
+    working_dir: /app
+
+networks:
+  red_interna_inventario:
+
+volumes:
+  persistencia_db_inventario:
