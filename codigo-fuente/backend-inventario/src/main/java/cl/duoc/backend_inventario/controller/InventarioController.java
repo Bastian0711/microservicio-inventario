@@ -28,7 +28,7 @@ import jakarta.validation.Valid;
 
 @Tag(name = "Inventario", description = "Operaciones de gestión de inventario")
 @RestController
-@RequestMapping("/api/v2/inventario")
+@RequestMapping("/api/v3/inventario")
 public class InventarioController {
 
     private final InventarioService inventarioService;
