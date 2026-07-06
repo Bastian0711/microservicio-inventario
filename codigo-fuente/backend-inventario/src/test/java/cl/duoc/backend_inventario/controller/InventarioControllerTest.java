@@ -40,7 +40,7 @@ class InventarioControllerTest {
     void testListarRetorna200() throws Exception {
         when(service.listar()).thenReturn(List.of());
 
-        mockMvc.perform(get("/api/v2/inventario"))
+        mockMvc.perform(get("/api/v3/inventario"))
                 .andExpect(status().isOk());
     }
 
@@ -50,7 +50,7 @@ class InventarioControllerTest {
 
         when(service.obtenerPorId(1L)).thenReturn(dto);
 
-        mockMvc.perform(get("/api/v2/inventario/1"))
+        mockMvc.perform(get("/api/v3/inventario/1"))
                 .andExpect(status().isOk());
     }
 
@@ -59,7 +59,7 @@ class InventarioControllerTest {
         when(service.obtenerPorId(99L))
                 .thenThrow(new RecursoNoEncontradoException("Inventario no encontrado"));
 
-        mockMvc.perform(get("/api/v2/inventario/99"))
+        mockMvc.perform(get("/api/v3/inventario/99"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value("NOT_FOUND"));
     }
@@ -70,7 +70,7 @@ class InventarioControllerTest {
 
         when(service.obtenerPorProducto(10L)).thenReturn(dto);
 
-        mockMvc.perform(get("/api/v2/inventario/producto/10"))
+        mockMvc.perform(get("/api/v3/inventario/producto/10"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.nombreProducto").value("Sushi Combo"));
     }
@@ -89,7 +89,7 @@ class InventarioControllerTest {
         when(service.crearInventario(org.mockito.ArgumentMatchers.any(InventarioCreateDTO.class)))
                 .thenReturn(response);
 
-        mockMvc.perform(post("/api/v2/inventario")
+        mockMvc.perform(post("/api/v3/inventario")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -107,7 +107,7 @@ class InventarioControllerTest {
         when(service.descontarStock(org.mockito.ArgumentMatchers.any(DescontarStockDTO.class)))
                 .thenReturn(response);
 
-        mockMvc.perform(post("/api/v2/inventario/descontar")
+        mockMvc.perform(post("/api/v3/inventario/descontar")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -125,7 +125,7 @@ class InventarioControllerTest {
                         org.mockito.ArgumentMatchers.any(InventarioUpdateDTO.class)))
                 .thenReturn(response);
 
-        mockMvc.perform(put("/api/v2/inventario/1")
+        mockMvc.perform(put("/api/v3/inventario/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -136,7 +136,7 @@ class InventarioControllerTest {
     void testEliminarRetorna200() throws Exception {
         doNothing().when(service).eliminar(1L);
 
-        mockMvc.perform(delete("/api/v2/inventario/1"))
+        mockMvc.perform(delete("/api/v3/inventario/1"))
                 .andExpect(status().isOk());
     }
 }
