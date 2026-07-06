@@ -9,6 +9,6 @@ import cl.duoc.backend_inventario.dto.ProductoDTO;
 @FeignClient(name = "producto-service", url = "${producto.service.url}")
 public interface ProductoClient {
 
-    @GetMapping("/api/v2/productos/{id}")
+    @GetMapping("/api/v3/productos/{id}")
     ProductoDTO obtenerProducto(@PathVariable("id") Long id);
 }
